@@ -55,6 +55,7 @@ while not connection_found:
 while True:
     try:
         # Check if it's time to save the file with a new timestamp
+        current_datetime = datetime.datetime.now()
         if current_datetime.hour == 0 and current_datetime.minute == 0:
             # Close the current file
             file.close()
@@ -67,50 +68,54 @@ while True:
 
             print("New file created.")
 
-        # Read data from serial port
-        line = port.readline().decode('utf-8').strip()
+        # Read data from serial port until $GPGGA or $GPRMC is encountered
+        line = ""
+        while not line.startswith('$GPGGA') and not line.startswith('$GPRMC'):
+            line = port.readline().decode('utf-8').strip()
 
         # Process GPS data
-        if line.startswith('$GPGGA') or line.startswith('$GPRMC'):
-            data = line.split(',')
-            if line.startswith('$GPGGA') and len(data) >= 10:
-                latitude_raw = data[2]
-                latitude_dir = data[3]
-                longitude_raw = data[4]
-                longitude_dir = data[5]
-                altitude = data[9]
-                num_satellites = data[7]
+        data = line.split(',')
+        if line.startswith('$GPGGA') and len(data) >= 10:
+            latitude_raw = data[2]
+            latitude_dir = data[3]
+            longitude_raw = data[4]
+            longitude_dir = data[5]
+            altitude = data[9]
+            num_satellites = data[7]
 
-                # Check if latitude_raw value is empty
-                if not latitude_raw:
-                    continue
+            # Check if latitude_raw value is empty
+            if not latitude_raw:
+                continue
 
-                # Convert latitude to DD format
-                latitude_deg = float(latitude_raw[:2])
-                latitude_min = float(latitude_raw[2:]) / 60.0
-                latitude_dd = latitude_deg + latitude_min
-                if latitude_dir == 'S':
-                    latitude_dd *= -1
+            # Convert latitude to DD format
+            latitude_deg = float(latitude_raw[:2])
+            latitude_min = float(latitude_raw[2:]) / 60.0
+            latitude_dd = latitude_deg + latitude_min
+            if latitude_dir == 'S':
+                latitude_dd *= -1
 
-                # Convert longitude to DD format
-                longitude_deg = float(longitude_raw[:3])
-                longitude_min = float(longitude_raw[3:]) / 60.0
-                longitude_dd = longitude_deg + longitude_min
+            # Convert longitude to DD format
+            longitude_deg = float(longitude_raw[:3])
+            longitude_min = float(longitude_raw[3:]) / 60.0
+            longitude_dd = longitude_deg + longitude_min
 
-                if longitude_dir == 'W':
-                    longitude_dd *= -1
+            if longitude_dir == 'W':
+                longitude_dd *= -1
 
-                # Get current timestamp from computer time
-                current_time = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
+            # Get current timestamp from computer time
+            current_time = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
 
-                # Write data to file
-                file.write(
-                    f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}\n")
-                file.flush()  # Flush the buffer to ensure immediate write to file
+            # Write data to file
+            file.write(
+                f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}\n")
+            file.flush()  # Flush the buffer to ensure immediate write to file
 
-                # Print data to console
-                print(
-                    f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}")
+            # Print data to console
+            print(
+                f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}")
+
+            # Add a delay of 60 seconds
+            time.sleep(60)
 
     except serial.SerialException as e:
         print(f"Serial Exception occurred: {str(e)}")
@@ -154,9 +159,6 @@ while True:
         # Re-open the file in append mode
         file = open(file_path, 'a')
         print("Connection re-established.")
-
-    # Add a delay of 60 seconds
-    time.sleep(1)
 
 # Close file and serial port
 file.close()

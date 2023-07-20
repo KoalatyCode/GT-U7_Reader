@@ -68,9 +68,12 @@ while True:
 
             print("New file created.")
 
+        # Discard all previous lines
+        port.reset_input_buffer()
+
         # Read data from serial port until $GPGGA or $GPRMC is encountered
         line = ""
-        while not line.startswith('$GPGGA') and not line.startswith('$GPRMC'):
+        while not line.startswith('$GPGGA'):
             line = port.readline().decode('utf-8').strip()
 
         # Process GPS data
@@ -111,8 +114,7 @@ while True:
             file.flush()  # Flush the buffer to ensure immediate write to file
 
             # Print data to console
-            print(
-                f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}")
+            print(f"Timestamp: {current_time}, Latitude: {latitude_dd:.6f}, Longitude: {longitude_dd:.6f}, Altitude: {altitude}, Satellites: {num_satellites}")
 
             # Add a delay of 60 seconds
             time.sleep(60)

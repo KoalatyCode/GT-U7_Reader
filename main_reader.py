@@ -38,10 +38,14 @@ while not connection_found:
             port_name = f'COM{port_number}'
             port = serial.Serial(port_name, 9600, timeout=1)
 
-            # If the connection is successful, set the flag and break out of the loop
-            connection_found = True
-            print(f'Connection made on {port_name}')
-            break
+            line = port.readline().decode('utf-8').strip()
+            if line.startswith('$GPRMC'):
+                # If the connection is successful and the port has gps data,
+                # set the flag and break out of the loop
+                connection_found = True
+                print(f'Connection made on {port_name}')
+                break
+
         except serial.SerialException:
             # If connection fails, continue to the next port
             continue
@@ -143,10 +147,14 @@ while True:
                     port_name = f'COM{port_number}'
                     port = serial.Serial(port_name, 9600, timeout=1)
 
-                    # If the connection is successful, set the flag and break out of the loop
-                    connection_found = True
-                    print(f'Connection made on {port_name}')
-                    break
+                    line = port.readline().decode('utf-8').strip()
+                    if line.startswith('$GPRMC'):
+                        # If the connection is successful and the port has gps data,
+                        # set the flag and break out of the loop
+                        connection_found = True
+                        print(f'Connection made on {port_name}')
+                        break
+
                 except serial.SerialException:
                     # If connection fails, continue to the next port
                     continue
